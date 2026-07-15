@@ -1,42 +1,24 @@
-import express from "express";
-import swaggerUi from "swagger-ui-express";
-
+import app from "./app.js";
 import { env } from "./config/env.js";
-import { swaggerSpec } from "./config/swagger.js";
+import { prisma } from "./config/prisma.js";
 
-const app = express();
+async function startServer() {
+  try {
+    await prisma.$connect();
 
-// Middlewares
-app.use(express.json());
+    console.log("✅ Connected to PostgreSQL");
 
-// Swagger
-app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-
-/**
- * @openapi
- * /health:
- *   get:
- *     summary: Health check endpoint
- *     tags:
- *       - Health
- *     responses:
- *       200:
- *         description: Server is healthy
- */
-
-// Health Check
-app.get("/health", (_req, res) => {
-    res.status(200).json({
-        success: true,
-        message: "Server is healthy",
-        timestamp: new Date().toISOString(),
+    app.listen(env.PORT, () => {
+      console.log("🚀 BuildBackend Core started successfully");
+      console.log(`🌍 Environment: ${env.NODE_ENV}`);
+      console.log(`📡 Server: http://localhost:${env.PORT}`);
+      console.log(`📖 Swagger: http://localhost:${env.PORT}/api/docs`);
     });
-});
+  } catch (error) {
+    console.error("❌ Failed to connect to PostgreSQL");
+    console.error(error);
+    process.exit(1);
+  }
+}
 
-// Start Server
-app.listen(env.PORT, () => {
-    console.log("🚀 BuildBackend Core started successfully");
-    console.log(`🌍 Environment: ${env.NODE_ENV}`);
-    console.log(`📡 Server: http://localhost:${env.PORT}`);
-    console.log(`📖 Swagger: http://localhost:${env.PORT}/api/docs`);
-});
+startServer();
